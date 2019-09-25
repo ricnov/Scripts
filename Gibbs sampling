@@ -1,0 +1,44 @@
+# Load the data
+
+Y <- c(2.68,1.18,-0.97,-0.98,-1.03)
+n <- length(Y)
+
+# Create an empty matrix for the MCMC samples
+
+S <- 25000
+samples <- matrix(NA,S,2)
+colnames(samples) <- c("mu","sigma")
+
+# Initial values
+
+mu <- mean(Y)
+sig2 <- var(Y)
+
+# priors: mu ~ N(gamma,tau), sig2 ~ InvG(a,b)
+
+gamma <- 0
+tau <- 100^2
+a <- 0.1
+b <- 0.1
+
+# Gibbs sampling
+
+for(s in 1:S){
+P <- n/sig2 + 1/tau
+M <- sum(Y)/sig2 + gamma/tau
+mu <- rnorm(1,M/P,1/sqrt(P))
+
+A <- n/2 + a
+B <- sum((Y-mu)^2)/2 + b
+sig2 <- 1/rgamma(1,A,B)
+
+samples[s,]<-c(mu,sqrt(sig2))
+}
+
+# Plot the joint posterior and marginal of mu
+plot(samples,xlab=expression(mu),ylab=expression(sigma))
+hist(samples[,1],xlab=expression(mu))
+
+# Posterior mean, median and credible intervals
+apply(samples,2,mean)
+apply(samples,2,quantile,c(0.025,0.500,0.975))
